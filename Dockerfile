@@ -17,5 +17,5 @@ COPY . .
 # 暴露端口（云平台会通过 $PORT 环境变量覆盖）
 EXPOSE 8000
 
-# 启动（生产模式，端口由环境变量 $PORT 决定）
-CMD ["python", "run.py", "--prod"]
+# 启动（生产模式，固定端口 8000 以匹配 Railway 域名配置）
+CMD ["python", "run.py", "--prod", "--port", "8000"]
