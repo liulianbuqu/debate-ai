@@ -101,5 +101,56 @@ function toggleTheme() {
     }
 }
 
+// ========== 数据导出/导入 ==========
+
+async function exportData() {
+    try {
+        const data = await api.request('GET', '/api/data/export');
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const date = new Date().toISOString().slice(0, 10);
+        a.download = `debate-ai-backup-${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('数据导出成功 ✓', 'success');
+    } catch (err) {
+        showToast('导出失败: ' + err.message, 'error');
+    }
+}
+
+async function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        if (!data.materials && !data.profiles && !data.generations) {
+            showToast('无效的备份文件', 'error');
+            return;
+        }
+
+        if (!confirm('导入将合并数据到当前数据库。确定继续？')) {
+            event.target.value = '';
+            return;
+        }
+
+        const result = await api.request('POST', '/api/data/import', data);
+        showToast(result.message, 'success');
+        // 刷新页面数据
+        await Promise.all([
+            loadMaterials(),
+            loadProfile(),
+            loadReferenceOptions()
+        ]);
+    } catch (err) {
+        showToast('导入失败: ' + err.message, 'error');
+    }
+    event.target.value = '';
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', initApp);

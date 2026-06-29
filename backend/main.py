@@ -19,7 +19,7 @@ for p in [str(_root), str(_backend)]:
 load_dotenv(_root / ".env")
 
 from database import init_db
-from routers import materials, generation, profile, feedback, settings
+from routers import materials, generation, profile, feedback, settings, data_migration
 
 app = FastAPI(
     title="辩论AI辅助写作系统",
@@ -42,6 +42,7 @@ app.include_router(generation.router)
 app.include_router(profile.router)
 app.include_router(feedback.router)
 app.include_router(settings.router)
+app.include_router(data_migration.router)
 
 
 @app.on_event("startup")

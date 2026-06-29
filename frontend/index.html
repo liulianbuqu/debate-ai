@@ -280,6 +280,18 @@
                         <option value="deepseek-chat">deepseek-chat</option>
                     </select>
                 </div>
+
+                <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+
+                <div class="form-group">
+                    <label>数据备份</label>
+                    <p class="help-text">导出数据为 JSON 文件，或从备份中恢复</p>
+                    <div style="display:flex;gap:8px;margin-top:6px">
+                        <button class="btn btn-secondary" style="padding:7px 14px;font-size:13px" onclick="exportData()">📥 导出数据</button>
+                        <button class="btn btn-secondary" style="padding:7px 14px;font-size:13px" onclick="document.getElementById('importFileInput').click()">📤 导入数据</button>
+                        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('settingsModal')">取消</button>
