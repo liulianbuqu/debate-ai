@@ -1,0 +1,26 @@
+# ============================================
+# 辩论AI辅助写作系统 — Docker Compose
+# ============================================
+# 用法:
+#   docker compose up -d          # 启动
+#   docker compose down           # 停止
+#   docker compose logs -f        # 查看日志
+
+services:
+  debate-ai:
+    build: .
+    container_name: debate-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 持久化数据库（容器重启数据不丢失）
+      - debate-data:/app
+    environment:
+      # API Key（建议在此设置，也可在网页上填写）
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      # 其他配置
+      - TZ=Asia/Shanghai
+
+volumes:
+  debate-data:

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辩论AI助手</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ========== 顶部导航 ========== -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="app-logo">
+                辩论<span class="logo-accent">AI</span>助手
+            </div>
+            <div class="header-divider"></div>
+            <span class="header-subtitle">让 AI 学会你的辩论风格</span>
+        </div>
+        <div class="header-right">
+            <button class="header-btn" id="themeToggle" onclick="toggleTheme()" title="切换暗色模式">🌙</button>
+            <button class="header-btn-text" onclick="showSettings()">设置</button>
+            <span class="profile-badge" id="profileStatus">待完善</span>
+            <img src="avatar.jpg" class="user-avatar" id="userAvatar" title="辩手头像">
+        </div>
+    </header>
+
+    <!-- ========== 主布局 ========== -->
+    <div class="app-layout">
+        <!-- 左侧面板：素材库 -->
+        <aside class="panel panel-left">
+            <div class="panel-header">
+                <h2>素材库</h2>
+                <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="showAddMaterial()">+ 新增</button>
+            </div>
+            <div class="panel-body">
+                <div class="filter-tabs" id="materialFilters">
+                    <span class="filter-tab active" onclick="filterMaterials(this, '')">全部</span>
+                    <span class="filter-tab" onclick="filterMaterials(this, '立论')">立论</span>
+                    <span class="filter-tab" onclick="filterMaterials(this, '质询')">质询</span>
+                    <span class="filter-tab" onclick="filterMaterials(this, '陈词')">陈词</span>
+                    <span class="filter-tab" onclick="filterMaterials(this, '结辩')">结辩</span>
+                    <span class="filter-tab" onclick="filterMaterials(this, '自由辩')">自由辩</span>
+                </div>
+                <div class="material-list" id="materialList">
+                    <div class="empty-state">暂无素材<br>点击「+ 新增」上传你的稿件</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间主面板 -->
+        <main class="panel panel-main">
+            <!-- 生成表单 -->
+            <div class="generation-form" id="generationForm">
+                <div class="form-header">
+                    <h2>生成稿件</h2>
+                    <p>选择类型和持方，输入辩题，AI 将参考你的风格画像进行写作</p>
+                </div>
+                <div class="form-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>稿件类型</label>
+                            <select id="scriptType">
+                                <option value="立论">立论</option>
+                                <option value="质询">质询</option>
+                                <option value="陈词">陈词</option>
+                                <option value="结辩">结辩</option>
+                                <option value="自由辩">自由辩</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>持方</label>
+                            <select id="position">
+                                <option value="正方">正方</option>
+                                <option value="反方">反方</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>辩题</label>
+                        <input type="text" id="topic" placeholder="例如：当代年轻人应该更注重理想还是现实">
+                    </div>
+                    <div class="form-group">
+                        <label>参考素材</label>
+                        <div id="refSelector" class="ref-selector">
+                            <!-- 已选素材标签 -->
+                            <div id="refChips" class="ref-chips"></div>
+                            <!-- 搜索过滤 -->
+                            <div class="ref-search-wrap">
+                                <input type="text" id="refSearch" class="ref-search" placeholder="搜索素材…" autocomplete="off">
+                                <span class="ref-search-icon">⌕</span>
+                            </div>
+                            <!-- 素材列表 -->
+                            <div id="refList" class="ref-list">
+                                <div class="ref-empty">暂无素材，先上传一些吧</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="referenceIds" value="">
+                    </div>
+                    <div class="form-group">
+                        <label>额外要求</label>
+                        <textarea id="additionalInstructions" rows="2" placeholder="例如：多举例子、不要太严肃、多用排比句…"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="generateBtn" onclick="generateScript()">
+                        生成稿件
+                    </button>
+                </div>
+            </div>
+
+            <!-- 生成结果 -->
+            <div class="generation-result" id="generationResult">
+                <div class="result-header">
+                    <h2>生成结果</h2>
+                    <div class="result-header-actions">
+                        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px" onclick="saveResultAsMaterial()">+ 保存为素材</button>
+                        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px" onclick="copyResult()">复制</button>
+                        <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px" onclick="regenerateScript()">重新生成</button>
+                        <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="clearResult()">关闭</button>
+                    </div>
+                </div>
+                <div class="result-meta" id="resultMeta"></div>
+                <div class="result-content" id="resultContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>AI 正在思考…</span>
+                    </div>
+                </div>
+                <!-- 反馈 -->
+                <div class="feedback-section">
+                    <h3>评价此稿件</h3>
+                    <div class="star-rating" id="starRating">
+                        <span class="star" data-value="5">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="1">★</span>
+                    </div>
+                    <textarea id="feedbackComments" rows="2" placeholder="修改意见或评价（可选）" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;resize:vertical;background:var(--surface);color:var(--text);outline:none;font-family:var(--font-body)"></textarea>
+                    <div class="feedback-actions">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="wasUsed"> 我使用了此稿件
+                        </label>
+                        <button class="btn btn-secondary" style="padding:7px 16px;font-size:13px" onclick="submitFeedback()">提交反馈</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ========== 右侧面板：辩手画像 ========== -->
+        <aside class="panel panel-right">
+            <div class="panel-header">
+                <h2>辩手画像</h2>
+            </div>
+            <div class="panel-body">
+                <!-- 辩论理解（内联编辑） -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>辩论理解</h3>
+                        <button class="btn btn-ghost" style="padding:2px 8px;font-size:11px" onclick="toggleUnderstandingEdit()">编辑</button>
+                    </div>
+                    <div id="understandingDisplay">
+                        <div class="empty-state" style="padding:16px 12px;font-size:13px">写下你的辩论理念<br>让 AI 不只是模仿「形」，更理解「神」<br><button class="btn btn-secondary" style="padding:5px 12px;font-size:12px;margin-top:8px" onclick="toggleUnderstandingEdit()">去填写</button></div>
+                    </div>
+                    <div id="understandingEditor" style="display:none">
+                        <div class="form-group" style="margin-bottom:10px">
+                            <textarea id="u_辩论观" rows="2" placeholder="辩论对你来说意味着什么？" style="padding:8px 10px;font-size:13px"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom:10px">
+                            <textarea id="u_胜负观" rows="2" placeholder="赢比赛的关键是什么？" style="padding:8px 10px;font-size:13px"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom:10px">
+                            <textarea id="u_对辩题的理解方法论" rows="2" placeholder="你是怎么拆解辩题的？" style="padding:8px 10px;font-size:13px"></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:12px">
+                            <button class="btn btn-primary" style="padding:7px 16px;font-size:13px" onclick="saveInlineUnderstanding()">保存</button>
+                            <button class="btn btn-secondary" style="padding:7px 16px;font-size:13px" onclick="toggleUnderstandingEdit()">取消</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- 风格特征 -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>风格特征</h3>
+                    </div>
+                    <div id="styleProfile">
+                        <div class="empty-state" style="padding:16px 12px;font-size:13px">上传素材后自动建立</div>
+                    </div>
+                </div>
+                <!-- 系统状态 -->
+                <div class="profile-section">
+                    <div class="section-header">
+                        <h3>系统状态</h3>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">素材</span>
+                            <span class="stat-value" id="statMaterials">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">生成</span>
+                            <span class="stat-value" id="statGenerations">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">画像</span>
+                            <span class="stat-value" id="statUpdates">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ========== 模态框：新增素材 ========== -->
+    <div class="modal-overlay" id="addMaterialModal">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-header">
+                <h2>新增素材</h2>
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:13px" onclick="closeModal('addMaterialModal')">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:14px">
+                    <label>稿件类型</label>
+                    <select id="newMaterialType">
+                        <option value="立论">立论</option>
+                        <option value="质询">质询</option>
+                        <option value="陈词">陈词</option>
+                        <option value="结辩">结辩</option>
+                        <option value="自由辩">自由辩</option>
+                    </select>
+                </div>
+                <div class="form-row" style="margin-bottom:14px">
+                    <div class="form-group">
+                        <label>辩题</label>
+                        <input type="text" id="newMaterialTopic" placeholder="例如：知难行易/知易行难">
+                    </div>
+                    <div class="form-group">
+                        <label>持方</label>
+                        <select id="newMaterialPosition">
+                            <option value="">请选择</option>
+                            <option value="正方">正方</option>
+                            <option value="反方">反方</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:14px">
+                    <label>环节（可选）</label>
+                    <input type="text" id="newMaterialRound" placeholder="例如：初赛、决赛、第一轮…">
+                </div>
+                <div class="form-group">
+                    <label>全文内容</label>
+                    <textarea id="newMaterialContent" rows="10" placeholder="请粘贴或输入稿件全文…"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addMaterialModal')">取消</button>
+                <button class="btn btn-primary" id="saveMaterialBtn" onclick="saveMaterial()">保存素材</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 模态框：设置 ========== -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal" style="max-width:460px">
+            <div class="modal-header">
+                <h2>设置</h2>
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:13px" onclick="closeModal('settingsModal')">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:16px">
+                    <label>DeepSeek API Key</label>
+                    <input type="password" id="apiKey" placeholder="输入你的 DeepSeek API Key">
+                    <p class="help-text">密钥仅保存在浏览器本地。<a href="https://platform.deepseek.com/" target="_blank">获取 API Key</a></p>
+                </div>
+                <div class="form-group" style="margin-bottom:16px">
+                    <label>API 地址（可选）</label>
+                    <input type="text" id="apiUrl" placeholder="https://api.deepseek.com/v1/chat/completions">
+                </div>
+                <div class="form-group">
+                    <label>模型</label>
+                    <select id="modelSelect">
+                        <option value="deepseek-chat">deepseek-chat</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('settingsModal')">取消</button>
+                <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 模态框：素材详情 ========== -->
+    <div class="modal-overlay" id="viewMaterialModal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <h2 id="viewMaterialTitle">素材详情</h2>
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:13px" onclick="closeModal('viewMaterialModal')">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div class="material-meta" id="viewMaterialMeta"></div>
+                <div class="material-content-view" id="viewMaterialContent"></div>
+                <div class="analysis-block">
+                    <h3>风格分析</h3>
+                    <div id="analysisContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="reanalyzeMaterial()" id="reanalyzeBtn" style="display:none">重新分析</button>
+                <button class="btn btn-danger" onclick="deleteCurrentMaterial()">删除素材</button>
+                <button class="btn btn-secondary" onclick="closeModal('viewMaterialModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/materials.js"></script>
+    <script src="js/generation.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.env
+debate.db
+.agents
+node_modules
+.git
+.gitignore
+*.md
+sheep.jpg

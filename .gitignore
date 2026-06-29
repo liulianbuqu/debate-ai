@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# 数据库（本地开发用，云端会使用独立存储）
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# 环境变量（含 API Key，切勿提交）
+.env
+.ngrok_config/
+
+# VS Code
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 项目临时文件（用户可根据需要删除）
+sheep.jpg
+avatar.jpg
