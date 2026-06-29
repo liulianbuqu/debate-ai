@@ -7,20 +7,40 @@
 #   docker compose logs -f        # 查看日志
 
 services:
+  # PostgreSQL 数据库（云端使用 Railway 提供的服务，本地用此容器）
+  db:
+    image: postgres:16-alpine
+    container_name: debate-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: debate
+      POSTGRES_PASSWORD: debate_pass
+      POSTGRES_DB: debate_ai
+    volumes:
+      - debate-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U debate -d debate_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   debate-ai:
     build: .
     container_name: debate-ai
     restart: unless-stopped
     ports:
       - "8000:8000"
-    volumes:
-      # 持久化数据库（容器重启数据不丢失）
-      - debate-data:/app
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      # API Key（建议在此设置，也可在网页上填写）
+      # 使用 PostgreSQL（本地开发时连接本地的 db 容器）
+      - DATABASE_URL=postgresql://debate:debate_pass@db:5432/debate_ai
+      # API Key
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      # 其他配置
       - TZ=Asia/Shanghai
 
 volumes:
-  debate-data:
+  debate-pgdata:
